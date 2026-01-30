@@ -1,4 +1,4 @@
-package elvesgoclient
+package elves
 
 import "encoding/json"
 
