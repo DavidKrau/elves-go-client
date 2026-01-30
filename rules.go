@@ -1,6 +1,7 @@
 package elves
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 )
 
 // RuleGet- Get specific rule
-func (c *Client) RuleGet(id string) (*Attribute, error) {
+func (c *Client) RuleGet(id string) (*Rule, error) {
 	url := fmt.Sprintf("%s/v1/api/rule/%s", c.HostName, id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -20,7 +21,7 @@ func (c *Client) RuleGet(id string) (*Attribute, error) {
 		return nil, err
 	}
 
-	attribute := Attribute{}
+	attribute := Rule{}
 	err = json.Unmarshal(body, &attribute)
 	if err != nil {
 		return nil, err
@@ -30,36 +31,34 @@ func (c *Client) RuleGet(id string) (*Attribute, error) {
 }
 
 // RuleCreate - Create new rule
-func (c *Client) RuleCreate(name string, defaultValue string) (*Attribute, error) {
+func (c *Client) RuleCreate(rule *Rule) (*Rule, error) {
 	url := fmt.Sprintf("%s/v1/api/rule/", c.HostName)
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+
+	// Marshal the Rule struct to JSON
+	jsonBody, err := json.Marshal(rule)
 	if err != nil {
 		return nil, err
 	}
 
-	q := req.URL.Query()
-	// adding parameter name with variable name
-	q.Add("name", name)
-	// checking if defaultvalue exist
-	if defaultValue != "" {
-		// if yes adding parameter with value
-		q.Add("default_value", defaultValue)
+	// Create a new request with the JSON body
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, err
 	}
-	// encoding all parameters
-	req.URL.RawQuery = q.Encode()
 
+	req.Header.Add("Content-Type", "application/json")
 	body, err := c.RequestResponse200(req)
 	if err != nil {
 		return nil, err
 	}
 
-	attribute := Attribute{}
-	err = json.Unmarshal(body, &attribute)
+	createdRule := Rule{}
+	err = json.Unmarshal(body, &createdRule)
 	if err != nil {
 		return nil, err
 	}
 
-	return &attribute, nil
+	return &createdRule, nil
 }
 
 // RuleUpdate - Updates an rule
