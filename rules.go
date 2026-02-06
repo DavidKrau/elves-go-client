@@ -21,13 +21,13 @@ func (c *Client) RuleGet(id string) (*Rule, error) {
 		return nil, err
 	}
 
-	attribute := Rule{}
-	err = json.Unmarshal(body, &attribute)
+	rule := Rule{}
+	err = json.Unmarshal(body, &rule)
 	if err != nil {
 		return nil, err
 	}
 
-	return &attribute, nil
+	return &rule, nil
 }
 
 // RuleCreate - Create new rule
@@ -47,7 +47,7 @@ func (c *Client) RuleCreate(rule *Rule) (*Rule, error) {
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	body, err := c.RequestResponse200(req)
+	body, err := c.RequestResponse201(req)
 	if err != nil {
 		return nil, err
 	}
@@ -62,31 +62,32 @@ func (c *Client) RuleCreate(rule *Rule) (*Rule, error) {
 }
 
 // RuleUpdate - Updates an rule
-func (c *Client) RuleUpdate(id string, defaultValue string) error {
+func (c *Client) RuleUpdate(id string, rule *Rule) error {
 	url := fmt.Sprintf("%s/v1/api/rule/%s", c.HostName, id)
-	req, err := http.NewRequest(http.MethodPatch, url, nil)
+
+	// Marshal the Rule struct to JSON
+	jsonBody, err := json.Marshal(rule)
 	if err != nil {
 		return err
 	}
 
-	q := req.URL.Query()
-	// checking if defaultvalue exist
-	if defaultValue != "" {
-		// if yes adding parameter with value
-		q.Add("default_value", defaultValue)
-	} else {
-		q.Add("default_value", "")
+	// Create a new request with the JSON body
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return err
 	}
-	// encoding all parameters
-	req.URL.RawQuery = q.Encode()
+
+	req.Header.Add("Content-Type", "application/json")
 
 	body, err := c.RequestResponse200(req)
 	if err != nil {
 		return err
 	}
 
-	if string(body) != "" {
-		return errors.New(string(body))
+	updatedRule := Rule{}
+	err = json.Unmarshal(body, &updatedRule)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -100,7 +101,7 @@ func (c *Client) RuleDelete(id string) error {
 		return err
 	}
 
-	body, err := c.RequestResponse200(req)
+	body, err := c.RequestResponse204(req)
 
 	if err != nil {
 		return err
