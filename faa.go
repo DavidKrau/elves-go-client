@@ -48,6 +48,10 @@ type FAARule struct {
 	// Shown to users on the FAA event page, not exported to Santa
 	Description string `json:"description"`
 
+	// Leave out the policy's default processes. Only PathsWithAllowedProcesses
+	// rules get them.
+	SkipDefaultProcesses bool `json:"skip_default_processes"`
+
 	// Likely mistakes that Santa accepts. Set by Elves on read and write, ignored on write.
 	Warnings []string `json:"warnings,omitempty"`
 }
@@ -58,6 +62,11 @@ type FAASettings struct {
 	Version         string `json:"version"`
 	EventDetailURL  string `json:"event_detail_url"`
 	EventDetailText string `json:"event_detail_text"`
+
+	// Processes Elves adds to every PathsWithAllowedProcesses rule on export,
+	// such as the EDR agent and Spotlight, unless the rule skips them. Nil
+	// leaves the saved ones as they are on update; an empty slice clears them.
+	DefaultProcesses []FAAProcess `json:"default_processes"`
 }
 
 // FAARules - List all FAA rules
